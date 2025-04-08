@@ -1,0 +1,444 @@
+% Midterm 2
+
+\documentclass[8pt,letter,landscape]{article}
+\usepackage[margin=0.5cm]{geometry}
+\usepackage{multicol}
+\usepackage{amsmath,amssymb}
+\usepackage{enumitem}
+\usepackage{graphicx}
+\usepackage{tikz}
+\usetikzlibrary{matrix}
+
+\setlength{\columnsep}{0.5cm}
+\setlength{\parindent}{0pt}
+
+\newcommand{\sectiontitle}[1]{\textbf{\large #1}\vspace{0.2em}\hrule\vspace{0.5em}}
+
+\begin{document}
+
+\begin{multicols*}{3}
+
+\sectiontitle{Distributed Trees}
+
+\textbf{Split Selection Formula}
+
+$Split(i) = \arg\max_{s \in S} f(\sum_{\mathbf{x} \in \mathcal{I}} g(\mathbf{x}, s))$
+
+\begin{itemize}[leftmargin=*,nosep]
+    \item $s$: split candidate
+    \item $\mathcal{I}$: data points in node $i$
+    \item $f$: aggregate to compute purity of candidate
+    \item $g$: compute sufficient stats for each point $\mathbf{x}$
+\end{itemize}
+
+\textbf{Row Partitioning (PLANET)}
+\begin{itemize}[leftmargin=*,nosep]
+    \item Data points distributed across workers
+    \item Communication cost: $O(2^D B k m)$
+    \item $B$ = \# split candidates/feature, $k$ = \# features, $m$ = \# workers, $D$ = tree depth
+    \item Use for small $k/n$ and small $D/n$
+\end{itemize}
+
+\textbf{Column Partitioning (YGGDRASIL)}
+\begin{itemize}[leftmargin=*,nosep]
+    \item Features distributed across workers
+    \item Each worker evaluates subset of features
+    \item Communication cost: $O(2^D m + D n m)$
+    \item Use for large $k/n$ and large $D/n$
+\end{itemize}
+
+\sectiontitle{Neural Networks}
+
+\begin{itemize}[leftmargin=*,nosep]
+    \item For layers $l \in \{1,\dots,L\}$:
+    \begin{itemize}[leftmargin=*,nosep]
+        \item $h_l = W_l^\top o_{l-1}$ 
+        \item $o_l = \sigma_l(h_l)$
+    \end{itemize}
+    \item Final output: $\phi(x) = o_L$
+    \item Matrix multiplies: $O(nm)$ for $n \times m$ matrix
+\end{itemize}
+
+\textbf{Gradient Descent Update}
+
+\begin{itemize}[leftmargin=*,nosep]
+    \item $w_{i+1} = w_i - \alpha_i \nabla f(w_i)$
+    \item $\alpha_i$: step size at iteration $i$
+    \item $\nabla f(w_i)$: gradient of loss w.r.t weights
+\end{itemize}
+
+\textbf{Chain Rule}
+
+\begin{itemize}[leftmargin=*,nosep]
+    \item $\frac{d}{dx}f(g(h(x))) = f'(g(h(x))) \cdot g'(h(x)) \cdot h'(x)$
+    \item Naive: $O(k^2)$ for $k$ compositions
+    \item With memorization: $O(k)$
+\end{itemize}
+
+\textbf{Automatic Differentiation}
+
+\begin{itemize}[leftmargin=*,nosep]
+    \item Forward pass: Compute and store intermediates
+    \item Backward pass: Apply chain rule efficiently
+    \item Key feature of deep learning frameworks
+\end{itemize}
+
+\sectiontitle{Foundation Models}
+
+\begin{itemize}[leftmargin=*,nosep]
+    \item Pretraining: Train on large dataset
+    \item Alignment: Tune for specific objectives
+    \item Finetuning: Adapt to downstream task
+\end{itemize}
+
+\textbf{Full Finetuning}
+\begin{itemize}[leftmargin=*,nosep]
+    \item Start with pretrained weights $w_{pre}$
+    \item Update all model parameters on task data
+\end{itemize}
+
+\textbf{Linear Probing}
+\begin{itemize}[leftmargin=*,nosep]
+    \item Freeze weights \& only ft final layer
+    \item Can underperform full finetuning
+\end{itemize}
+
+\vspace{2em}
+\textbf{LoRA (Low Rank Adaptation)}
+\begin{itemize}[leftmargin=*,nosep]
+    \item Low rank $(r)$ approx. of weight updates $\Delta W$
+    \item $\Delta W = BA$ where $B \in \mathbb{R}^{d \times r}, A \in \mathbb{R}^{r \times d}$
+\end{itemize}
+
+\sectiontitle{Distributed Optimization}
+
+\textbf{Gradient Descent Update}
+\begin{itemize}[leftmargin=*,nosep]
+    \item Compute on full dataset in parallel
+    \item $O(nk)$ distributed compute, $O(k)$ local storage
+\end{itemize}
+
+\textbf{Stochastic GD Update}
+\begin{itemize}[leftmargin=*,nosep]
+    \item Sample single point $j$ randomly
+    \item $O(k)$ distributed compute, $O(k)$ local storage
+\end{itemize}
+
+\textbf{Mini-batch SGD}
+\begin{itemize}[leftmargin=*,nosep]
+    \item $\mathcal{B}_i \subseteq \{1,\dots,n\}$ random mini-batch
+    \item $O(bk)$ compute for batch size $b$
+\end{itemize}
+
+\textbf{One-shot Averaging}
+\begin{itemize}[leftmargin=*,nosep]
+    \item Solve locally: $w_m^* = \arg\min_{w} f_m(w)$
+    \item Average: $w = \frac{1}{M}\sum_{m=1}^M w_m^*$
+    \item Minimal communication but approximate
+\end{itemize}
+
+\textbf{CoCoA Framework}
+\begin{itemize}[leftmargin=*,nosep]
+    \item Local subproblems solved to accuracy $\Theta \in [0,1)$
+    \item $w^{(t+1)} = w^{(t)} + \sum_{k=1}^K \Delta w_k$
+    \item Controls local computation vs communication
+    \item Convergence guarantees for convex problems
+\end{itemize}
+
+\textbf{Convergence Rates (to $\epsilon$-accuracy)}
+
+\begin{tabular}{lll}
+Condition & GD & SGD \\
+\hline
+Convex & $O(1/\epsilon^2)$ & $O(1/\epsilon^2)$ \\
++ Lipschitz & $O(1/\epsilon)$ & $O(1/\epsilon^2)$ \\
++ Strong convex & $O(\log(1/\epsilon))$ & $O(1/\epsilon)$
+\end{tabular}
+
+\sectiontitle{DL Optimization}
+
+\textbf{Adaptive Learning Rates}
+\begin{itemize}[leftmargin=*,noitemsep,topsep=0pt]
+\item AdaGrad: $\mathbf{w}_{t+1} = \mathbf{w}_t - \alpha\mathbf{G}_t^{-1}\nabla f(\mathbf{w}_t)$
+    \begin{itemize}[leftmargin=*,nosep]
+        \item $(G_t)_{ii} = \sqrt{\sum_{j=1}^t \nabla f(\mathbf{w}_j)_i^2}$
+        \item Separate learning rate per parameter
+        \item Issue: Learning rates decay to zero
+    \end{itemize}
+\item RMSProp: Moving average instead of sum
+    \begin{itemize}[leftmargin=*,nosep]
+        \item $(g_t)_i = \beta(g_{t-1})_i + (1-\beta)(\nabla f(\mathbf{w}_t)_i)^2$
+        \item $(G_t)_{ii} = \sqrt{(g_t)_i}$
+    \end{itemize}
+\end{itemize}
+
+\textbf{Momentum Methods}
+\begin{itemize}[leftmargin=*,noitemsep,topsep=0pt]
+\item Polyak: $\mathbf{w}_{t+1} = \mathbf{w}_t - \alpha\nabla f(\mathbf{w}_t) + \beta(\mathbf{w}_t - \mathbf{w}_{t-1})$
+\item Nesterov: Evaluate gradient at "look-ahead" point
+    \begin{itemize}[leftmargin=*,nosep]
+        \item $\mathbf{w}_{t+1} = \mathbf{w}_t - \alpha\nabla f(\mathbf{w}_t + \beta(\mathbf{w}_t - \mathbf{w}_{t-1})) + \beta(\mathbf{w}_t - \mathbf{w}_{t-1})$
+    \end{itemize}
+    \item Adam: Combines momentum and RMSProp
+    \begin{itemize}[leftmargin=*,nosep]
+        \item $\mathbf{w}_{t+1} = \mathbf{w}_t - \alpha\mathbf{G}_t^{-1}\mathbf{v}_t$
+        \item $\mathbf{v}_t = \beta_2\mathbf{v}_{t-1} + (1-\beta_2)\nabla f(\mathbf{w}_t)$ (momentum)
+        \item $(g_t)_i = \beta_1(g_{t-1})_i + (1-\beta_1)(\nabla f(\mathbf{w}_t)_i)^2$ (RMSProp)
+    \end{itemize}
+\end{itemize}
+
+\textbf{Other Techniques}
+\begin{itemize}[leftmargin=*,noitemsep,topsep=0pt]
+\item Batch Normalization: Normalize layer inputs
+    \begin{itemize}[leftmargin=*,nosep]
+        \item $\hat{x}_i = \frac{x_i - \mu_\mathcal{B}}{\sqrt{\sigma^2_\mathcal{B} + \epsilon}}$
+        \item $y_i = \gamma\hat{x}_i + \beta$ (learnable parameters)
+        \item Use batch stats during training, population stats at test
+    \end{itemize}
+    \item Early Stopping: when val accuracy starts decreasing
+\end{itemize}
+
+\sectiontitle{Distributed Deep Learning}
+\begin{itemize}[leftmargin=*,nosep]
+    \item \textbf{Data Parallel}: replicate model, partition data
+    \begin{itemize}[leftmargin=*,nosep]
+        \item Compute gradients on local data shard
+        \item Aggregate gradients globally, update model replica
+        \item DDP: basic data parallel, single GPU per process
+        \item FSDP: shards model params/gradients for memory
+    \end{itemize}
+    
+    \item \textbf{Model Parallel}: partition model, replicate data
+    \begin{itemize}[leftmargin=*,nosep]
+        \item Tensor Parallel: split matrix ops across devices
+        \item Pipeline Parallel: split sequential layers
+        \item Communication pattern defines parallelism type
+    \end{itemize}
+
+    \item \textbf{Communication Strategies}:
+    \begin{itemize}[leftmargin=*,nosep]
+        \item Parameter Server: central server aggregates updates
+        \begin{itemize}[leftmargin=*,nosep]
+            \item Workers: $w' = w - \eta\Delta w$
+            \item $T_{comm} = O(mk)$ bottleneck at server
+            \item Good for async, sparse updates
+        \end{itemize}
+        \item Ring All-reduce: peer-to-peer communication
+        \begin{itemize}[leftmargin=*,nosep]
+            \item Each worker sends/receives from neighbors
+            \item $T_{comm} = O(k)$, optimal bandwidth use
+            \item Takes $2(m-1)$ rounds for $m$ workers
+        \end{itemize}
+    \end{itemize}
+
+    \item Large batches: more computation/less communication, but: DR \& poor generalization
+
+    \item \textbf{Diminishing Returns}:
+    \begin{itemize}[leftmargin=*,nosep]
+        \item Gradient diversity: $\Delta_D(w) := \frac{\sum_{i=1}^n \|\nabla f_i(w)\|_2^2}{\|\sum_{i=1}^n \nabla f_i(w)\|_2^2}$
+        \item Lower diversity $\rightarrow$ worse large batch performance
+        \item Additional gradients provide less value
+    \end{itemize}
+
+    \item \textbf{Poor Generalization}:
+    \begin{itemize}[leftmargin=*,nosep]
+        \item Large batches converge to sharp minima
+        \item Sharp minima generalize worse than flat minima
+        \item Solutions: noise injection, progressive batch sizes
+    \end{itemize}
+
+    \item \textbf{Gradient Compression}:
+    \begin{itemize}[leftmargin=*,nosep]
+        \item Quantization: reduce bits per value
+        \item Sparsification: drop small gradients
+        \item ATOMO: optimize compression-accuracy tradeoff
+        \item Must maintain convergence guarantees
+    \end{itemize}
+\end{itemize}
+
+\sectiontitle{Hardware Acceleration}
+\begin{itemize}[leftmargin=*,nosep]
+    \item \textbf{Tensor Cores}: Matmul in newer GPUs
+    \begin{itemize}[leftmargin=*,nosep]
+        \item Multiply 4x4 matrices in one clock cycle (128 FLOP)
+        \item Mixed prec.: multiply in FP16, accumulate in FP32
+    \end{itemize}
+\end{itemize}
+
+\sectiontitle{Parameter-Efficient Finetuning}
+\begin{itemize}[leftmargin=*,nosep]
+    \item \textbf{Specification}: Select subset of parameters to tune
+    \begin{itemize}[leftmargin=*,nosep]
+        \item Linear probing: Only tune final layer
+    \end{itemize}
+    \item \textbf{Addition}: Add new trainable parameters
+    \begin{itemize}[leftmargin=*,nosep]
+        \item Adapters: Insert trainable layers between frozen pretrained layers
+    \end{itemize}
+    \item \textbf{Reparameterization}: Transform parameters for efficient training
+    \begin{itemize}[leftmargin=*,nosep]
+        \item LoRA: Learn low-rank update matrices: $\mathbf{W}_{\text{ft}} = \mathbf{W}_{\text{pt}} + \frac{\alpha}{r}\mathbf{AB}$
+        \item QLoRA: Quantize pretrained weights + LoRA update
+    \end{itemize}
+\end{itemize}
+
+\sectiontitle{Hyperparameter Tuning}
+\begin{itemize}[leftmargin=*,nosep]
+    \item \textbf{Random vs Grid Search:}
+    \begin{itemize}[leftmargin=*,nosep]
+        \item Grid: Evenly discretize search space (linear/log)
+        \item Random: Sample HPs from defined ranges
+        \item Random often better when n (configs) linear in d
+    \end{itemize}
+    
+    \item \textbf{Successive Halving:}
+    \begin{itemize}[leftmargin=*,nosep]
+        \item Start with n configs, train for r iterations each
+        \item Keep top $\eta^{-k}$ configs after $\eta^k r$ iterations
+        \item Repeat until single best config remains
+    \end{itemize}
+    
+    \item \textbf{Hyperband:} Multiple brackets of successive halving
+    \begin{itemize}[leftmargin=*,nosep]
+        \item Each bracket: different n vs r trade-off
+        \item Outer loop: $s_{max}$ to 0, inner: successive halving
+        \item $n_i = \lfloor\frac{n}{s+1}\rfloor$, $r_i = r\eta^i$
+        \item Optimal bracket exists but unknown a priori
+    \end{itemize}
+
+    \item \textbf{Non-Stochastic Best Arm:}
+    \begin{itemize}[leftmargin=*,nosep]
+        \item Loss sequence: $\lim_{k\to\infty} \ell_{i,k} = \nu_i$
+        \item Error bound: $|\ell_{i,k} - \nu_i| \leq \gamma_k$ 
+        \item Goal: $\min_i \sum T_i$ subject to $\nu_{\hat{i}} = \min_i \nu_i$
+    \end{itemize}
+\end{itemize}
+
+\sectiontitle{Inference \& Compression}
+
+\textbf{Inference Metrics:}
+\begin{itemize}[leftmargin=*,nosep]
+    \item Accuracy: How well model performs
+    \item Model size: Memory needed for parameters
+    \item Latency: Time per single prediction
+    \item Throughput: Predictions per time unit
+    \item Energy: Power consumption per prediction
+\end{itemize}
+
+\textbf{Quantization:}
+\begin{itemize}[leftmargin=*,nosep]
+    \item Low-precision arithmetic for inference
+    \item FP32 $\rightarrow$ FP16/INT8/Binary
+    \item Common formats: \{Sign, Exponent, Mantissa\}
+    \item bfloat16: \{1,8,7\} matches FP32 range
+\end{itemize}
+
+\textbf{Pruning:}
+\begin{itemize}[leftmargin=*,nosep]
+    \item Unstructured: Individual weights
+    \item Structured: Entire filters/channels
+    \item Methods: Magnitude, Gradient, Taylor
+    \item Iterative: Prune $\rightarrow$ Retrain cycles
+\end{itemize}
+
+\textbf{Knowledge Distillation:}
+\begin{itemize}[leftmargin=*,nosep]
+    \item Student learns from teacher's soft targets
+    \item Softmax temperature: $p_i = \frac{\exp(z_i/T)}{\sum_j \exp(z_j/T)}$
+    \item Loss: $\mathcal{L} = \alpha H(y,\sigma_s) + \beta H(\sigma_t,\sigma_s)$
+    \item $T \in [1,20]$, larger $T$ for smaller students
+\end{itemize}
+
+\textbf{Evaluation:}
+\begin{itemize}[leftmargin=*,nosep]
+    \item Pareto frontier: accuracy vs. cost tradeoff
+    \item No dominated solutions exist on frontier
+    \item Compare: same accuracy, lower cost
+    \item Or: same cost, higher accuracy
+\end{itemize}
+
+\sectiontitle{Federated Learning}
+
+\textbf{ERM Objective:} $\min_w f(w) = \sum_{k=1}^m p_k F_k(w)$ where $F_k(w) = \sum_{i=1}^{n_k} \ell(h(x_k^{(i)}; w), y_k^{(i)})$
+
+\textbf{FedAvg Algorithm:}
+\begin{itemize}[leftmargin=*,nosep]
+    \item Local training: $E$ epochs of SGD on each device
+    \item Average model updates across devices: $w_{t+1} = \sum_{k} p_k w_k^t$
+    \item Communication cost: $O(mk)$ for $m$ devices, $k$ parameters
+\end{itemize}
+
+\textbf{FedProx:} Adds proximal term to limit impact of heterogeneity
+\begin{itemize}[leftmargin=*,nosep]
+    \item Local objective: $\min_{w_k} F_k(w_k) + \frac{\mu}{2} \|w_k - w^t\|^2$
+    \item Converges under B-dissimilarity: $\mathbb{E}[\|\nabla F_k(w)\|^2] \leq \|\nabla f(w)\|^2B^2$
+    \item IID data: $B=1$, non-IID data: $B>1$
+\end{itemize}
+
+\textbf{q-FFL:} Fair resource allocation objective
+\begin{itemize}[leftmargin=*,nosep]
+    \item $\min_w \frac{1}{q+1}(p_1F_1^{q+1} + p_2F_2^{q+1} + \cdots + p_NF_N^{q+1})$
+    \item $q \to 0$: standard objective; $q \to \infty$: minimax fairness
+    \item Reduces accuracy variance across devices while maintaining mean
+\end{itemize}
+
+\textbf{Key Challenges:}
+\begin{itemize}[leftmargin=*,nosep]
+    \item Statistical heterogeneity: non-IID data across devices
+    \item Systems heterogeneity: variable hardware/connectivity
+    \item Communication bottleneck: limited bandwidth, high latency
+    \item Privacy constraints: raw data cannot leave devices
+\end{itemize}
+
+\textbf{Model Approaches:}
+\begin{itemize}[leftmargin=*,nosep]
+    \item Global: Single shared model, learn from all devices
+    \item Local: Independent models per device, no sharing
+    \item MTL: Personalized models that learn from peers
+\end{itemize}
+
+\sectiontitle{Foundation Models Training}
+\begin{itemize}[leftmargin=*,nosep]
+    \item Next-token prediction on text, image, video, audio tokens
+    \item Error between learned model $\hat{p}_\theta(y|x)$ and ground-truth $p^*(y|x)$:
+    $$|\hat{p}_\theta(y|x) - p^*(y|x)| \propto \frac{1}{|\mathcal{D}(y|x)|^\alpha}$$
+    \item Error reduces with more data similar to target $x$
+\end{itemize}
+
+\sectiontitle{Synthetic Data}
+\begin{itemize}[leftmargin=*,nosep]
+    \item Generated by model (LLM) trained on expert data 
+    \item Key challenges:
+    \begin{itemize}[leftmargin=*,nosep]
+        \item Verification of correctness
+        \item Bias amplification/model collapse
+        \item Need for diversity
+    \end{itemize}
+    \item Types:
+    \begin{itemize}[leftmargin=*,nosep]
+        \item Positive data: Correct answers $\sim \pi$
+        \item Negative data: Incorrect answers $\sim \pi$
+    \end{itemize}
+\end{itemize}
+
+\sectiontitle{Reinforcement Learning for LLMs}
+\begin{itemize}[leftmargin=*,nosep]
+    \item Sparse reward MDP with terminal reward
+    \item Q-value: Expected future reward under policy $\tilde{\pi}$
+    $$Q_\pi(x, \hat{y}_{1:i-1}; \hat{y}_i) = \mathbb{E}_{y^{\text{new}}_{i+1:L}\sim\tilde{\pi}(\cdot|x,\hat{y}_{1:i})}[r([\hat{y}_{1:i}, y^{\text{new}}_{i+1:L}], y)]$$
+    \item Advantage: Relative change in value function
+    $$A_\pi(x, \hat{y}_{1:i-1};\hat{y}_i) = Q_\pi(x, \hat{y}_{1:i-1};\hat{y}_i) - Q_\pi(x, \hat{y}_{1:i-2};\hat{y}_{i-1})$$
+\end{itemize}
+
+\sectiontitle{Process Advantage Verifiers (PAVs)}
+\begin{itemize}[leftmargin=*,nosep]
+    \item Use advantage as dense reward bonus in RL
+    \item Improvement bound:
+    $$V^{t+1}(\pi) - V^t(\pi) \succcurlyeq \gamma \cdot \text{var}_{\tilde{\pi}}[A_{\tilde{\pi}}] + \gamma \cdot \langle A_\pi, A_{\tilde{\pi}}\rangle$$
+    \item Sample efficiency: 5-6x over outcome rewards only
+    \item Performance gain: 6-7\% improvement
+\end{itemize}
+
+\end{multicols*}
+
+\end{document}
